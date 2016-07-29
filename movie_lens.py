@@ -20,5 +20,16 @@ ratingsRDD = parts.map(lambda p: Row(userId=int(p[0]), movieId=int(p[1]),
 									 rating=float(p[2]), timestamp=long(p[3])))
 ratings = spark.createDataFrame(ratingsRDD)
 
-ratings.show()
+(training, test) = ratings.randomSplit([0.8, 0.2])
+
+als = ALS(maxIter=5, regParam=0.01, userCol="userId", itemCol="movieId", ratingCol="rating")
+model = als.fit(training)
+
+predictions = model.transform(test)
+evaluator = RegressionEvaluator(metricName="rmse", labelCol="rating", predictionCol="prediction")
+
+rmse = evaluator.evaluate(predictions)
+print "Root-mean-square error = " + str(rmse)
+
+#ratings.show()
 # print len(ratings.userId)
